@@ -1,7 +1,7 @@
 {
   "name": "movino",
   "version": "1.0.0",
-  "description": "\u0016A movie app, providing different features for user to search movies and look up the theatres about which movies are they showing!!!",
+  "description": "movie app, providing different features for user to search movies and look up the theatres about which movies are they showing!!!",
   "main": "index.js",
   "scripts": {
     "build": "webpack"
