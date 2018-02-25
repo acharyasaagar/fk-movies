@@ -14,7 +14,7 @@ export default function createCards(img, title) {
 
     // The card button
     let cardBtn = document.createElement('a')
-    cardBtn.classList.add('btn', 'btn-primary', 'btn-block')
+    cardBtn.classList.add('btn', 'btn-info', 'btn-block')
     cardBtn.innerHTML = `${title}`
 
     // Create DOM for card-block
