@@ -943,10 +943,36 @@ module.exports = Cancel;
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__services_Api__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__services_xmlToJson__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__services_createCards__ = __webpack_require__(30);
 
 
-__WEBPACK_IMPORTED_MODULE_0__services_Api__["a" /* default */].get('/TheatreAreas')
-.then(data => console.log(data.data))
+
+
+const d = new Date()
+let today = d.toLocaleDateString() // get today's date as local string
+let url = `/Schedule/?area=1038&dt=${today}` // append date to the url
+const showcase = document.getElementById('showcase')
+
+
+__WEBPACK_IMPORTED_MODULE_0__services_Api__["a" /* default */].get(url)
+.then((data) => {
+  let xmlStr
+  let parser
+  let xmlData
+  let jsonData
+    xmlStr = data.data // get string response
+    parser = new DOMParser() // instantiate domparser for parsing string to xml
+    xmlData = parser.parseFromString(xmlStr, "text/xml") // parse string
+    jsonData = Object(__WEBPACK_IMPORTED_MODULE_1__services_xmlToJson__["a" /* default */])(xmlData) // convert parsed xml to JSON data
+    let shows = jsonData.schedule.shows.show // Get the shows array
+    shows.forEach((show) => {
+    let newcard = Object(__WEBPACK_IMPORTED_MODULE_2__services_createCards__["a" /* default */])(show.images.eventmediumimageportrait, show.originaltitle)
+    showcase.appendChild(newcard)
+   })
+})
+console.log(jsonData)
+console.log(123)
 
 
 /***/ }),
@@ -1851,6 +1877,136 @@ module.exports = function spread(callback) {
     return callback.apply(null, arr);
   };
 };
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = xmlToJson;
+/* eslint-disable */
+function xmlToJson(xml) {
+  // Create the return object
+  let obj = {};
+
+  if (xml.nodeType == 1) { // element
+    // do attributes
+    if (xml.attributes.length > 0) {
+      for (let j = 0; j < xml.attributes.length; j++) {
+        const attribute = xml.attributes.item(j);
+        // my browser gives warnings about using nodeValue on attributes, saying that
+        //	using it is deprecated.  I've wrapped it in a try..catch and left the
+        //	nodeValue usage inside the fallback.
+        try {
+          obj[attribute.nodeName.toLowerCase()] = attribute.value;
+        } catch(err) {
+          obj[attribute.nodeName.toLowerCase()] = attribute.nodeValue;
+        }
+      }
+    }
+  } else if (xml.nodeType == 3 || xml.nodeType == 4) { // text or cdata
+    obj = xml.nodeValue;
+  }
+
+  // do children
+  if (xml.hasChildNodes()) {
+    for (var i = 0; i < xml.childNodes.length; i++) {
+      let item = xml.childNodes.item(i);
+      let nodeName = item.nodeName.toLowerCase();
+
+      // instead of weird object member names that start with #, rename to something nice and dandy
+      if (nodeName == '#text')
+        {nodeName = 'nodeValue';}
+      else if (nodeName == '#cdata-section')
+        {nodeName = 'cdataValue';}
+
+      if (typeof (obj[nodeName]) === 'undefined') {
+        obj[nodeName] = xmlToJson(item);
+      } else {
+        if (typeof (obj[nodeName].push) === 'undefined') {
+          let old = obj[nodeName];
+          obj[nodeName] = [];
+          obj[nodeName].push(old);
+        }
+        obj[nodeName].push(xmlToJson(item));
+      }
+    }
+  }
+  // check if the nodeValue exists, and if so, if it is an array join it to make it a string and strip
+  //	leading and trailing whitespace.
+  if (obj.nodeValue) {
+    if (obj.nodeValue instanceof Array) {
+      obj.nodeValue = obj.nodeValue.join('');
+    }
+    obj.nodeValue = obj.nodeValue.trim();	// node value gets a trim.  note that cdata does not.
+    // iterate through properties to see if the nodeValue is the only thing here.  if so, move the value
+    //	up a level
+    let onlyNV = true;
+    for (i in obj) {
+      if (i != 'nodeValue') {
+        onlyNV = false;
+      }
+    }
+    if (onlyNV) {
+      obj = obj.nodeValue;
+    }
+  }
+  if (obj.cdataValue) {
+    if (obj.cdataValue instanceof Array) {
+      obj.cdataValue = obj.cdataValue.join('');
+    }
+    // iterate through properties to see if the cdataValue is the only thing here.  if so, move the value
+    //	up a level
+    let onlyCD = true;
+    for (i in obj) {
+      if (i != 'cdataValue') {
+        onlyCD = false;
+      }
+    }
+    if (onlyCD) {
+      obj = obj.cdataValue;
+    }
+  }
+
+  return obj;
+}
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = createCards;
+function createCards(img, title) {
+    // the card container div
+    let card = document.createElement('div')
+    card.classList.add('card')
+
+    // The card image element and its attributes
+    let cardImg = document.createElement('img')
+    cardImg.classList.add('card-img-top')
+    cardImg.setAttribute('src', img)
+
+    // The card-block div
+    let cardBlock = document.createElement('div')
+    cardBlock.classList.add('card-block')
+
+    // The card button
+    let cardBtn = document.createElement('a')
+    cardBtn.classList.add('btn', 'btn-info', 'btn-block')
+    cardBtn.innerHTML = `${title}`
+
+    // Create DOM for card-block
+    cardBlock.appendChild(cardBtn)
+
+    // create DOM for cards
+    card.appendChild(cardImg)
+    card.appendChild(cardBlock)
+    return card
+}
+
 
 
 /***/ })
